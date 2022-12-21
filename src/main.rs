@@ -1,23 +1,34 @@
-use std::env;
-use std::fs::File;
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
+use std::{env, fmt};
 
 fn main() {
     let action = env::args().nth(1).unwrap_or_default();
-    let mut task_list: Vec<Task> = Vec::new();
+    let mut database = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .read(true)
+        .open("database.txt")
+        .unwrap();
 
     if action == "new" {
         let name = env::args().nth(2).unwrap();
         let description = env::args().nth(3).unwrap();
         let new_task = Task::new(name, description);
-        task_list.push(new_task);
+        if let Err(e) = writeln!(database, "{}", new_task) {
+            eprintln!("Couldn't write to file: {}", e);
+        }
     }
 
-    for task in task_list {
-        println!("{:?}", task);
+    if action == "list" {
+        let mut buffer = String::new();
+        if let Err(e) = database.read_to_string(&mut buffer) {
+            eprintln!("Couldn't read file: {}", e);
+        }
+        println!("{}", buffer);
     }
 }
 
-#[derive(Debug)]
 struct Task {
     name: String,
     description: String,
@@ -26,5 +37,11 @@ struct Task {
 impl Task {
     fn new(name: String, description: String) -> Self {
         Self { name, description }
+    }
+}
+
+impl fmt::Display for Task {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}] {}", &self.name, &self.description)
     }
 }
