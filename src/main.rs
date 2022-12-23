@@ -1,6 +1,9 @@
+mod task;
+
+use std::env;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
-use std::{env, fmt};
+use task::Task;
 
 fn main() {
     let action = env::args().nth(1).unwrap_or_default();
@@ -26,22 +29,5 @@ fn main() {
             eprintln!("Couldn't read file: {}", e);
         }
         println!("{}", buffer);
-    }
-}
-
-struct Task {
-    name: String,
-    description: String,
-}
-
-impl Task {
-    fn new(name: String, description: String) -> Self {
-        Self { name, description }
-    }
-}
-
-impl fmt::Display for Task {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}] {}", &self.name, &self.description)
     }
 }
