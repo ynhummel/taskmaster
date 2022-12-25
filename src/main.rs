@@ -1,12 +1,31 @@
+mod cli;
 mod task;
 
-use std::env;
+use clap::{Parser, Subcommand};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use task::Task;
 
+#[derive(Parser)]
+#[command(name = "TaskMaster")]
+#[command(author = "ynh")]
+#[command(version = "0.0.1")]
+#[command(propagate_version = true)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Add {
+        name: Option<String>,
+        description: Option<String>,
+    },
+    List,
+}
+
 fn main() {
-    let action = env::args().nth(1).unwrap_or_default();
     let mut database = OpenOptions::new()
         .append(true)
         .create(true)
@@ -14,20 +33,21 @@ fn main() {
         .open("database.txt")
         .unwrap();
 
-    if action == "new" {
-        let name = env::args().nth(2).unwrap();
-        let description = env::args().nth(3).unwrap();
-        let new_task = Task::new(name, description);
-        if let Err(e) = writeln!(database, "{}", new_task) {
-            eprintln!("Couldn't write to file: {}", e);
-        }
-    }
+    let cli = Cli::parse();
 
-    if action == "list" {
-        let mut buffer = String::new();
-        if let Err(e) = database.read_to_string(&mut buffer) {
-            eprintln!("Couldn't read file: {}", e);
+    match cli.command {
+        Commands::Add { name, description } => {
+            let new_task = Task::new(name.unwrap(), description.unwrap());
+            if let Err(e) = writeln!(database, "{}", new_task) {
+                eprintln!("Couldn't write to file: {}", e);
+            }
         }
-        println!("{}", buffer);
+        Commands::List => {
+            let mut buffer = String::new();
+            if let Err(e) = database.read_to_string(&mut buffer) {
+                eprintln!("Couldn't read file: {}", e);
+            }
+            println!("{}", buffer);
+        }
     }
 }
