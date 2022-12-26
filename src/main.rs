@@ -2,12 +2,13 @@ mod task;
 
 use clap::{Parser, Subcommand};
 use rusqlite::{Connection, Result};
+use std::fs;
 use task::Task;
 
 #[derive(Parser)]
 #[command(name = "TaskMaster")]
 #[command(author = "ynh")]
-#[command(version = "0.0.1")]
+#[command(version = "0.1.0")]
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
@@ -16,18 +17,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    ///List all tasks,
+    ///usage: tk list
+    List,
+    ///adds a task with "name" and "description",
+    ///usage: tk add [name] [description]
     Add {
         name: Option<String>,
         description: Option<String>,
     },
-    List,
-    Delete {
-        name: Option<String>,
-    },
+    ///Deletes a task,
+    ///usage: tk delete [name]
+    Delete { name: Option<String> },
 }
 
 fn main() -> Result<()> {
-    let conn = Connection::open("./database.db3")?;
+    let mut path = dirs::home_dir().unwrap();
+    path.push(".my_apps/taskmaster");
+    fs::create_dir_all(&path).unwrap();
+    path.push("database.db3");
+    let conn = Connection::open(&path)?;
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS task (
