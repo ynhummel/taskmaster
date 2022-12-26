@@ -1,8 +1,8 @@
 use std::fmt;
 
 pub struct Task {
-    name: String,
-    description: String,
+    pub name: String,
+    pub description: String,
 }
 
 impl Task {
